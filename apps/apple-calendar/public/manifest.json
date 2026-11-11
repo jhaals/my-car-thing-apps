@@ -1,0 +1,23 @@
+{
+  "id": "01a1bfe6-63c3-703a-96b9-2f6423096d5b",
+  "name": "Apple Calendar",
+  "version": "0.1.1",
+  "description": "Today’s Apple Calendar meetings on your Car Thing.",
+  "settings": "settings.html",
+  "config": [],
+  "permissions": [],
+  "art": {
+    "heroPx": 248,
+    "thumbPx": 96
+  },
+  "extension": {
+    "entry": "extension/desktop.mjs",
+    "api": 1,
+    "permissions": [
+      "env:HOME",
+      "run:/usr/bin/open",
+      "read:~/Library/Application Support/Bridgething Apple Calendar/responses",
+      "write:~/Library/Application Support/Bridgething Apple Calendar/responses"
+    ]
+  }
+}

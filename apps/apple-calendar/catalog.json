@@ -1,0 +1,9 @@
+{
+  "author": "Johan Haals",
+  "homepage": "https://github.com/jhaals/my-car-thing-apps",
+  "source": "https://github.com/jhaals/my-car-thing-apps",
+  "icon": null,
+  "screenshots": [],
+  "categories": ["productivity"],
+  "min_libbridgething_version": "0.17.0"
+}
