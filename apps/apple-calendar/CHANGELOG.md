@@ -1,5 +1,9 @@
 # Apple Calendar
 
+## 0.1.2
+
+Retry transient Calendar helper launch failures automatically and log macOS error details.
+
 ## 0.1.1
 
 Fix Calendar access in the desktop app with a separately authorized Mac helper app.

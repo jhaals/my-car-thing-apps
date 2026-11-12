@@ -1,7 +1,7 @@
 {
   "id": "01a1bfe6-63c3-703a-96b9-2f6423096d5b",
   "name": "Apple Calendar",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Today’s Apple Calendar meetings on your Car Thing.",
   "settings": "settings.html",
   "config": [],

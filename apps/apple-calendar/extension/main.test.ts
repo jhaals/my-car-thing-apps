@@ -5,6 +5,8 @@ const url = 'https://meet.google.com/abc-defg-hij';
 const calls: { command: string; args?: string[] }[] = [];
 const replies: unknown[] = [];
 const removed: string[] = [];
+const launchResults: number[] = [];
+const errors: string[] = [];
 let listener: MessageListener;
 const event = {
   id: 'known',
@@ -29,12 +31,17 @@ Object.defineProperty(globalThis, 'Deno', {
       removed.push(path);
     },
     Command: class {
-      constructor(command: string, options: { args?: string[] }) {
-        calls.push({ command, args: options.args });
-      }
+      constructor(
+        private command: string,
+        private options: { args?: string[] },
+      ) {}
       async output() {
+        calls.push({ command: this.command, args: this.options.args });
+        const code = this.options.args?.includes('-W') ? (launchResults.shift() ?? 0) : 0;
         return {
-          success: true,
+          success: code === 0,
+          code,
+          stderr: new TextEncoder().encode(code ? 'LaunchServices unavailable' : ''),
           stdout: new TextEncoder().encode(
             JSON.stringify({
               type: 'calendar.snapshot',
@@ -56,7 +63,7 @@ mock.module('@bridgething/extension', () => ({
       on: (_name: string, fn: MessageListener) => {
         listener = fn;
       },
-      log: { error: () => {} },
+      log: { error: (error: string) => errors.push(error) },
     } as unknown as ExtensionContext),
 }));
 await import('./main');
@@ -71,8 +78,13 @@ const device = {
   },
 };
 async function request(data: unknown) {
+  const previousReplies = replies.length;
   listener(device, { encoding: 'json', data });
-  await Bun.sleep(0);
+  if (device.active) {
+    const deadline = Date.now() + 3_000;
+    while (replies.length === previousReplies && Date.now() < deadline) await Bun.sleep(5);
+    expect(replies.length).toBeGreaterThan(previousReplies);
+  }
 }
 
 afterAll(() => {
@@ -97,4 +109,37 @@ test('opens only the stored Meet link for an active device, and never a supplied
   device.active = false;
   await request({ type: 'calendar.openMeet', id: 'known' });
   expect(calls).toHaveLength(2);
+});
+
+test('retries a transient launch failure automatically and shares the pending refresh', async () => {
+  device.active = true;
+  const previousCalls = calls.length;
+  const previousRemoved = removed.length;
+  launchResults.push(1, 0);
+  await Promise.all([
+    request({ type: 'calendar.refresh', force: true }),
+    request({ type: 'calendar.refresh', force: true }),
+  ]);
+  expect(calls.length - previousCalls).toBe(2);
+  expect(removed.length - previousRemoved).toBe(1);
+  expect(replies.at(-1)).toMatchObject({ error: null, events: [event] });
+  expect(errors).toHaveLength(0);
+  await request({ type: 'calendar.refresh' });
+  expect(calls.length - previousCalls).toBe(2);
+});
+
+test('reports macOS launch details after one retry and lets the next heartbeat recover', async () => {
+  const previousCalls = calls.length;
+  const previousRemoved = removed.length;
+  launchResults.push(1, 1);
+  await request({ type: 'calendar.refresh', force: true });
+  expect(calls.length - previousCalls).toBe(2);
+  expect(removed.length - previousRemoved).toBe(1);
+  expect(replies.at(-1)).toMatchObject({ error: expect.any(String), events: [] });
+  expect(errors.at(-1)).toContain('exit 1');
+  expect(errors.at(-1)).toContain('LaunchServices unavailable');
+  expect(errors.at(-1)).not.toContain('calendar:setup');
+  await request({ type: 'calendar.refresh' });
+  expect(calls.length - previousCalls).toBe(3);
+  expect(replies.at(-1)).toMatchObject({ error: null, events: [event] });
 });

@@ -1,5 +1,6 @@
 import { asJson, defineExtension, json } from '@bridgething/extension';
 import { join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { isSnapshot, type CalendarReply } from '../src/calendar';
 
 let controller: AbortController | undefined;
@@ -13,7 +14,7 @@ await defineExtension({
 
     function refresh(force = false): Promise<void> {
       if (pending) return pending;
-      if (!force && snapshot && Date.now() - lastAttempt < 60_000) return Promise.resolve();
+      if (!force && snapshot?.error === null && Date.now() - lastAttempt < 60_000) return Promise.resolve();
       lastAttempt = Date.now();
       controller = new AbortController();
       pending = (async () => {
@@ -26,7 +27,7 @@ await defineExtension({
           const response = await Deno.makeTempFile({ dir: join(directory, 'responses'), prefix: 'calendar-' });
           let value: unknown;
           try {
-            const output = await new Deno.Command('/usr/bin/open', {
+            const command = new Deno.Command('/usr/bin/open', {
               args: ['-W', '-n', '--stdout', response, join(directory, 'Bridgething Apple Calendar.app')],
               clearEnv: true,
               env: { HOME: home },
@@ -34,8 +35,16 @@ await defineExtension({
               stdout: 'null',
               stderr: 'piped',
               signal: AbortSignal.any([controller!.signal, AbortSignal.timeout(90_000)]),
-            }).output();
-            if (!output.success) throw new Error('Calendar helper could not launch. Run bun run calendar:setup.');
+            });
+            let output = await command.output();
+            if (!output.success) {
+              await delay(1_000, undefined, { signal: controller!.signal });
+              output = await command.output();
+            }
+            if (!output.success) {
+              const detail = new TextDecoder().decode(output.stderr).trim();
+              throw new Error(`Calendar helper could not launch (exit ${output.code}): ${detail}`);
+            }
             value = JSON.parse(await Deno.readTextFile(response));
           } finally {
             await Deno.remove(response);
