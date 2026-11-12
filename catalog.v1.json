@@ -1,7 +1,7 @@
 {
   "$schema": "https://apps.bridgething.com/schemas/catalog/v1.json",
   "schema": "catalog.v1",
-  "updated_at": "2026-11-11T14:11:17.223Z",
+  "updated_at": "2026-11-12T14:07:12.116Z",
   "repo": {
     "name": "My Car Thing Apps",
     "description": "Webapps by My Car Thing Apps.",
@@ -21,6 +21,32 @@
       "homepage": "https://github.com/jhaals/my-car-thing-apps",
       "source": "https://github.com/jhaals/my-car-thing-apps",
       "versions": [
+        {
+          "version": "0.1.2",
+          "released_at": "2026-11-12T14:07:12.112Z",
+          "download": {
+            "url": "https://jhaals.github.io/my-car-thing-apps/r/01a1bfe6-63c3-703a-96b9-2f6423096d5b/0.1.2.zip",
+            "size": 903204,
+            "sha256": "4fcb4f9e7edde9d6c72cac7bc0f33977334590229b8801af0a5f32df66d76b38"
+          },
+          "settings": {
+            "url": "https://jhaals.github.io/my-car-thing-apps/s/01a1bfe6-63c3-703a-96b9-2f6423096d5b/0.1.2.html",
+            "size": 40070,
+            "sha256": "d1180df4f10a22713c37837f15b2497a910419315710ae120eb0455507be57c7"
+          },
+          "permissions": [],
+          "extension": {
+            "desktop": true,
+            "permissions": [
+              "env:HOME",
+              "run:/usr/bin/open",
+              "read:~/Library/Application Support/Bridgething Apple Calendar/responses",
+              "write:~/Library/Application Support/Bridgething Apple Calendar/responses"
+            ]
+          },
+          "min_libbridgething_version": "0.17.0",
+          "changelog": "Retry transient Calendar helper launch failures automatically and log macOS error details."
+        },
         {
           "version": "0.1.1",
           "released_at": "2026-11-11T14:11:17.218Z",
